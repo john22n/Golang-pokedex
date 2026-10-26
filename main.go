@@ -10,36 +10,21 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func() error
+	callback    func(*config) error
+}
+
+type config struct {
+	commands map[string]cliCommand
 }
 
 func main() {
-	scanner := bufio.NewScanner(os.Stdin)
 
-	for {
-		fmt.Print("Pokedex > ")
-		scanner.Scan()
-		words := cleanInput(scanner.Text())
-		if len(words) == 0 {
-			continue
-		}
-		commandNmae := words[0]
-		command, exists := getCommands()[commandNmae]
-
-		if exists {
-			err := command.callback()
-			if err != nil {
-				fmt.Println(err)
-			}
-			continue
-		} else if scanner.Err() != nil {
-			fmt.Println("Unknown command")
-			continue
-		} else {
-			fmt.Println("Unknown command")
-			continue
-		}
+	cfg := config{
+		commands: getCommands(),
 	}
+
+	startRepl(&cfg)
+
 }
 
 func cleanInput(text string) []string {
@@ -60,5 +45,34 @@ func getCommands() map[string]cliCommand {
 			description: "Exit the Pokedex",
 			callback:    commandExit,
 		},
+	}
+}
+
+func startRepl(cfg *config) {
+	scanner := bufio.NewScanner(os.Stdin)
+
+	for {
+		fmt.Print("Pokedex > ")
+		scanner.Scan()
+		words := cleanInput(scanner.Text())
+		if len(words) == 0 {
+			continue
+		}
+		commandName := words[0]
+		command, exists := cfg.commands[commandName]
+
+		if exists {
+			err := command.callback(cfg)
+			if err != nil {
+				fmt.Println(err)
+			}
+			continue
+		} else if scanner.Err() != nil {
+			fmt.Println("Unknown command")
+			continue
+		} else {
+			fmt.Println("Unknown command")
+			continue
+		}
 	}
 }
