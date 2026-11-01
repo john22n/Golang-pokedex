@@ -7,9 +7,17 @@ import (
 )
 
 func (c *Client) LocationList(pageURL *string) (LocationArea, error) {
+	locationResp := LocationArea{}
+
 	url := baseURL + "/location-area/"
 	if pageURL != nil {
 		url = *pageURL
+	}
+
+	entry, ok := c.cache.Get(url)
+	if ok {
+		json.Unmarshal(entry, &locationResp)
+		return locationResp, nil
 	}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -29,7 +37,8 @@ func (c *Client) LocationList(pageURL *string) (LocationArea, error) {
 		return LocationArea{}, err
 	}
 
-	locationResp := LocationArea{}
+	c.cache.Add(url, dat)
+
 	err = json.Unmarshal(dat, &locationResp)
 	if err != nil {
 		return LocationArea{}, err

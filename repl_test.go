@@ -2,14 +2,25 @@ package main
 
 import (
 	"bytes"
-	"github.com/google/go-cmp/cmp"
 	"io"
 	"os"
 	"os/exec"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/john22n/golang-pokedex/internal/pokeapi"
 )
+
+var pokeClient = pokeapi.NewClient(5 * time.Second)
+
+var cfg = config{
+	commands:      getCommands(),
+	pokeapiClient: pokeClient,
+}
 
 func TestCleanInput(t *testing.T) {
 	cases := map[string]struct {
@@ -56,7 +67,7 @@ func TestCommandHelp(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
-			got := commandHelp()
+			got := commandHelp(&cfg)
 
 			w.Close()
 			os.Stdout = oldStdout
@@ -85,7 +96,7 @@ func TestGetCommands(t *testing.T) {
 		wantKeys []string
 	}{
 		"validate_pokedex_commands": {
-			wantKeys: []string{"help", "exit"},
+			wantKeys: []string{"help", "exit", "map", "mapb"},
 		},
 	}
 
@@ -124,10 +135,7 @@ func TestGetCommands(t *testing.T) {
 
 			diff := cmp.Diff(wantHelpCmd, got["help"], cmp.Exporter(
 				func(reflect.Type) bool { return true }),
-				cmp.Comparer(
-					func(x, y func() error) bool {
-						return reflect.ValueOf(x).Pointer() == reflect.ValueOf(y).Pointer()
-					}),
+				cmpopts.IgnoreFields(cliCommand{}, "callback"),
 			)
 
 			if diff != "" {
@@ -188,5 +196,5 @@ func TestCommandExitSubprocess(t *testing.T) {
 		return
 	}
 
-	_ = commandExit()
+	_ = commandExit(&cfg)
 }
