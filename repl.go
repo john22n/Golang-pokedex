@@ -11,7 +11,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, ...string) error
 }
 
 type config struct {
@@ -19,6 +19,12 @@ type config struct {
 	pokeapiClient        pokeapi.Client
 	nextLocationsURL     *string
 	previousLocationsURL *string
+	pokedex              map[string]Pokemon
+}
+
+type Pokemon struct {
+	name           string
+	baseExperience int64
 }
 
 func cleanInput(text string) []string {
@@ -49,6 +55,16 @@ func getCommands() map[string]cliCommand {
 			description: "Display the previous 20 locations areas in the Pokemon world",
 			callback:    commandMapB,
 		},
+		"explore": {
+			name:        "explore",
+			description: "See a list of all the Pokemon in a given location",
+			callback:    commandExplore,
+		},
+		"catch": {
+			name:        "catch",
+			description: "Catch a pokemon",
+			callback:    commandCatch,
+		},
 	}
 }
 
@@ -63,10 +79,15 @@ func startRepl(cfg *config) {
 			continue
 		}
 		commandName := words[0]
+		args := []string{}
+		if len(words) > 1 {
+			args = words[1:]
+		}
+
 		command, exists := cfg.commands[commandName]
 
 		if exists {
-			err := command.callback(cfg)
+			err := command.callback(cfg, args...)
 			if err != nil {
 				fmt.Println(err)
 			}
