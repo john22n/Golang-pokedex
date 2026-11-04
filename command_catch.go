@@ -11,10 +11,6 @@ func commandCatch(c *config, args ...string) error {
 		return errors.New("you must provide a pokemon to catch")
 	}
 
-	min := 0
-	max := 608
-	r := rand.IntN(max-min+1) + min
-
 	pokemon := args[0]
 
 	fmt.Printf("Throwing a Pokeball at %s...\n", pokemon)
@@ -25,15 +21,15 @@ func commandCatch(c *config, args ...string) error {
 		return err
 	}
 
-	if r > int(caught.BaseExperience) {
+	r := rand.IntN(int(caught.BaseExperience))
+
+	if r > 40 {
 		fmt.Printf("%s was caught!\n", caught.Name)
-		c.pokedex[pokemon] = Pokemon{
-			name:           pokemon,
-			baseExperience: caught.BaseExperience,
-		}
 	} else {
 		fmt.Printf("%s escaped\n", pokemon)
+		return nil
 	}
 
+	c.pokedex[caught.Name] = caught
 	return nil
 }

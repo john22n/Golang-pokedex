@@ -11,7 +11,7 @@ func commandExplore(c *config, args ...string) error {
 	}
 
 	name := args[0]
-	location, err := c.pokeapiClient.PokemonList(name)
+	location, err := c.pokeapiClient.PokemonListLocation(name)
 	if err != nil {
 		return err
 	}
@@ -19,7 +19,7 @@ func commandExplore(c *config, args ...string) error {
 	fmt.Printf("Exploring %s...\n", name)
 	fmt.Println("Found Pokemon: ")
 	for _, enc := range location.PokemonEncounters {
-		fmt.Printf(" - %s\n", enc.PokemonObj.Name)
+		fmt.Printf(" - %s\n", enc.Pokemon.Name)
 	}
 
 	return nil

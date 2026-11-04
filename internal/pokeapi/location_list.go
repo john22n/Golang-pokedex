@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func (c *Client) LocationList(pageURL *string) (LocationArea, error) {
-	locationResp := LocationArea{}
+func (c *Client) LocationList(pageURL *string) (RespShallowLocations, error) {
+	locationResp := RespShallowLocations{}
 
 	url := baseURL + "/location-area/"
 	if pageURL != nil {
@@ -22,26 +22,26 @@ func (c *Client) LocationList(pageURL *string) (LocationArea, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return LocationArea{}, err
+		return locationResp, err
 	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return LocationArea{}, err
+		return locationResp, err
 	}
 
 	defer resp.Body.Close()
 
 	dat, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return LocationArea{}, err
+		return locationResp, err
 	}
 
 	c.cache.Add(url, dat)
 
 	err = json.Unmarshal(dat, &locationResp)
 	if err != nil {
-		return LocationArea{}, err
+		return locationResp, err
 	}
 
 	return locationResp, nil

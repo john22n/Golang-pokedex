@@ -19,12 +19,7 @@ type config struct {
 	pokeapiClient        pokeapi.Client
 	nextLocationsURL     *string
 	previousLocationsURL *string
-	pokedex              map[string]Pokemon
-}
-
-type Pokemon struct {
-	name           string
-	baseExperience int64
+	pokedex              map[string]pokeapi.Pokemon
 }
 
 func cleanInput(text string) []string {
@@ -64,6 +59,16 @@ func getCommands() map[string]cliCommand {
 			name:        "catch",
 			description: "Catch a pokemon",
 			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Inpsect a pokemon",
+			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "list of all the pokemon caught",
+			callback:    commandPokedex,
 		},
 	}
 }

@@ -6,8 +6,8 @@ import (
 	"net/http"
 )
 
-func (c *Client) CaughtPokemon(name string) (CaughtPokemon, error) {
-	caughtResponse := CaughtPokemon{}
+func (c *Client) CaughtPokemon(name string) (Pokemon, error) {
+	caughtResponse := Pokemon{}
 
 	url := baseURL + "/pokemon/" + name
 
