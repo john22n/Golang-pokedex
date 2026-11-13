@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"os"
 	"os/exec"
@@ -96,7 +97,7 @@ func TestGetCommands(t *testing.T) {
 		wantKeys []string
 	}{
 		"validate_pokedex_commands": {
-			wantKeys: []string{"help", "exit", "map", "mapb"},
+			wantKeys: []string{"help", "exit", "map", "mapb", "explore", "catch", "inspect", "pokedex"},
 		},
 	}
 
@@ -197,4 +198,30 @@ func TestCommandExitSubprocess(t *testing.T) {
 	}
 
 	_ = commandExit(&cfg)
+}
+
+func TestReplCommandsAndEOF(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestReplSubprocess$")
+	cmd.Env = append(os.Environ(), "GO_WANT_REPL_PROCESS=1")
+	cmd.Stdin = strings.NewReader("  HELP  \n\ninspect pikachu\nmapb\nunknown\n")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("REPL should handle commands and exit on EOF: %v", err)
+	}
+	for _, expected := range []string{
+		"Welcome to the Pokedex!", "explore:", "catch:", "inspect:", "pokedex:",
+		"you have not caught this pokemon", "you're on the first page", "Unknown command",
+	} {
+		if !strings.Contains(string(output), expected) {
+			t.Errorf("REPL output missing %q", expected)
+		}
+	}
+}
+
+func TestReplSubprocess(t *testing.T) {
+	if os.Getenv("GO_WANT_REPL_PROCESS") == "1" {
+		main()
+	}
 }

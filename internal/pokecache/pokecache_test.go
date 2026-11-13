@@ -1,7 +1,9 @@
 package pokecache
 
 import (
+	"fmt"
 	"github.com/google/go-cmp/cmp"
+	"sync"
 	"testing"
 	"time"
 )
@@ -44,7 +46,6 @@ func TestAddGet(t *testing.T) {
 
 func TestReapLoop(t *testing.T) {
 	const baseTime = 5 * time.Millisecond
-	const waitTime = baseTime + 5*time.Millisecond
 	cache := NewCache(baseTime)
 	cache.Add("https://example.com", []byte("testdata"))
 
@@ -54,11 +55,37 @@ func TestReapLoop(t *testing.T) {
 		return
 	}
 
-	time.Sleep(waitTime)
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) {
+		if _, ok := cache.Get("https://example.com"); !ok {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatal("expected entry to expire within one second")
+}
 
-	_, ok = cache.Get("https://example.com")
-	if ok {
-		t.Errorf("exptected not to find key")
-		return
+func TestConcurrentAddGet(t *testing.T) {
+	cache := NewCache(time.Hour)
+	var workers sync.WaitGroup
+	for worker := 0; worker < 16; worker++ {
+		workers.Add(1)
+		go func(worker int) {
+			defer workers.Done()
+			key := fmt.Sprintf("key-%d", worker)
+			for version := 0; version < 50; version++ {
+				value := []byte(fmt.Sprintf("value-%d-%d", worker, version))
+				cache.Add(key, value)
+				got, ok := cache.Get(key)
+				if !ok || string(got) != string(value) {
+					t.Errorf("cache lost value for %s", key)
+					return
+				}
+			}
+		}(worker)
+	}
+	workers.Wait()
+	if _, ok := cache.Get("missing"); ok {
+		t.Fatal("missing key must not be present")
 	}
 }

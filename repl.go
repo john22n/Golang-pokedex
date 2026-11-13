@@ -78,7 +78,12 @@ func startRepl(cfg *config) {
 
 	for {
 		fmt.Print("Pokedex > ")
-		scanner.Scan()
+		if !scanner.Scan() {
+			if err := scanner.Err(); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+			}
+			return
+		}
 		words := cleanInput(scanner.Text())
 		if len(words) == 0 {
 			continue

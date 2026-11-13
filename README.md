@@ -57,21 +57,25 @@ exit
 ```
 
 `mapb` returns to the previous location page. A catch can fail, so `inspect` only
-works after a successful catch. Use `exit` to end the session; EOF handling needs
-improvement. There is no hosted demo.
+works after a successful catch. Use `exit` or close standard input (EOF) to end
+the session. There is no hosted demo.
 
 ## Tests and current status
 
 ```bash
-go test ./...
+go vet ./...
+go test -race -count=1 ./...
 ```
 
-Tests cover input normalization, help/exit behavior, the command registry, and
-cache storage/cleanup. **The current suite fails `TestGetCommands`: its expected
-list still has four commands, while the application has eight.** The `help` and
-`exit` CLI flow was exercised successfully during this documentation update;
-that does not verify live API behavior.
+Tests cover CLI input normalization, help/exit/EOF behavior, error messages,
+the eight-command registry, and cache storage, expiration, and concurrent access.
+The [CI workflow](.github/workflows/ci.yml) runs vet and the race-enabled suite
+on pushes and pull requests, using the Go version in `go.mod`.
 
-Next improvements are bringing command coverage up to date, graceful EOF
-handling, and API error-path tests before adding a CI gate. No CI workflow or
-license is currently included.
+The suite does not contact PokéAPI and does not validate live API behavior.
+HTTP failure handling and randomized catching still need dedicated coverage.
+
+## License
+
+Source code is available under the [MIT License](LICENSE).
+PokéAPI data and Pokémon names/assets are not relicensed by this repository.
